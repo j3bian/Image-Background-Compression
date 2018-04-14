@@ -102,4 +102,5 @@ ENV/
 *.p
 
 # NN files (Keras Neural Network Models)
-^(?!default).*.nn
+*.nn
+!default*.nn
