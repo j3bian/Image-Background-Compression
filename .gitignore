@@ -100,7 +100,11 @@ ENV/
 
 # pickled files
 *.p
+!sample10000.p
 
 # NN files (Keras Neural Network Models)
 *.nn
 !default*.nn
+
+# tensorboard tmp files
+tmp/*

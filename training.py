@@ -11,8 +11,8 @@ from keras.callbacks import TensorBoard
 from models import create_VAE, create_VAE_discriminator, unbundle_discriminator
 from data_loading import get_data
 
-DATAPATH = ''
-ID = str(int(time.time))
+DATAPATH = 'default10000.p'
+ID = str(int(time.time()))
 
 data = get_data(DATAPATH)
 x_train = data['x_train']

@@ -4,7 +4,7 @@ import pickle
 
 import numpy as np
 
-sys.path.append('shapeset/shapeset2_1cspo_2_3.5000.test_code')
+sys.path.append('data_generation/shapeset/shapeset2_1cspo_2_3.5000.test_code')
 
 from image_config import *
 
@@ -13,7 +13,7 @@ if __name__ == '__main__':
     n = int(sys.argv[1])
     file_name = sys.argv[2]
 
-    print_status = sys.argv[4] == 'True' if len(sys.argv) > 4 else False
+    print_status = sys.argv[3] == 'True' if len(sys.argv) > 3 else False
 
     
     d = dataset(shapeset=2,seed=2,tag='test',free='color,orientation', fixed='size,position')

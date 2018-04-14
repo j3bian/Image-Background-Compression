@@ -135,7 +135,7 @@ class ForegroundSearch:
         show = len(self.displays) != 0
         if 'original' in self.displays:
             plt.figure()
-            plt.imshow(img)
+            plt.imshow(np.asarray(img), cmap='gray')
             plt.title('Original Image')
         
         if 'masked' in self.displays:
