@@ -10,16 +10,16 @@ Uncompressed digital images are stored as collection of pixels, their resolution
 
 <details>
     <summary>Image Compression</summary>
-The JPEG (Joint Photographic Experts Group) standard is a lossy compression algorithm that provides one solution to this problem. Simply, it relies on the 2D Discrete Cosine Transform to deconstruct the image into the frequency domain and then compresses the image in the frequency domain. With more detail in the image, the more information is stored within the frequency domain, and therefore less compression can be done and the larger the file. For a blank white picture on the other hand, the information can be stored in the very low frequency range and therefore can be greatly compressed and the file is much smaller.
-![alt text] (/images/figure1.jpg "Figure 1") \
+The JPEG (Joint Photographic Experts Group) standard is a lossy compression algorithm that provides one solution to this problem. Simply, it relies on the 2D Discrete Cosine Transform to deconstruct the image into the frequency domain and then compresses the image in the frequency domain. With more detail in the image, the more information is stored within the frequency domain, and therefore less compression can be done and the larger the file. For a blank white picture on the other hand, the information can be stored in the very low frequency range and therefore can be greatly compressed and the file is much smaller.<br>
+![Figure 1] (images/figure1.jpg "Figure 1")<br>
 Figure 1: Two JPEG images: Blank (left) only has size 1.27KB while Random (left) has size 22.5KB
 </details>
 
 <details>
     <summary>Ocular foveated imaging</summary>
 The human eye (and many other animals) uses an imaging technique to also increase resolution of an incoming image without necessarily having to support such a high resolution. The light receptors in an eye is not evenly distributed, instead the receptors are more densely packed in the middle, called the fovea. This means the perceived image is very clear in the middle but low resolution the further out from the center, this is called foveated imaging. A simple demonstration of this phenomenon it to hold a book at arm’s length and close one eye, place a thumb on the page and with the open eye, stare directly at your thumb and try to read the words on the page with your peripheral vision.
-A simple estimate of the number of light receptors in a human eye gives us an approximation of 5 million receptors, translating to a 5 megapixel resolution. However, using a foveated imaging technique and moving one’s to translate the center of the image, the human eye mimics a resolution of 576 megapixels .
-![alt text] (/images/figure2.jpg "Figure 2") \
+A simple estimate of the number of light receptors in a human eye gives us an approximation of 5 million receptors, translating to a 5 megapixel resolution. However, using a foveated imaging technique and moving one’s to translate the center of the image, the human eye mimics a resolution of 576 megapixels .<br>
+![Figure 2] (images/figure2.jpg "Figure 2")<br>
 Figure 2: Rendered simulation of foveated imagining. The center remains very highly detailed while the peripherals are blurred.
 </details>
 
@@ -43,10 +43,10 @@ A Variation Autoencoder  (VAE) is trained on a dataset of shapes as well as a da
 A VAE is used since we make the assumption that objects of interest belong to 3 categories of distinct shape: Triangle, Rectangle and Ellipse. We therefore know that latent variables must exist for these shapes and therefore a VAE is used. Furthermore we want the VAE to be resilient to noise, therefore training inputs have noise added on top while the targets were noise free. Theoretically, the VAE will be able to regenerate the shape in the input image without the noise. 
 The structure of the VAE made up of an encoder and a decoder. The encoder starts with three sets of Convolution + Pooling layers followed by a fully connected layer leading to the latent variables layer, the decoder is the same but in reverse with upsampling layers replacing pooling layers. The decision for three sets of Conv + Pool layers was made since the feature for differentiating shapes is not very difficult so it should not require a very deep network, however a feature at the deepest convolution layer should span the width of at least half the input size. With a default input size of 16x16, this was determined that 3 should be enough; trials confirmed this hypothesis.
 
-![alt text] (/images/figure3.jpg "Figure 3") \
+![Figure 3] (images/figure3.jpg "Figure 3") \
 Figure 3: VAE model structure (input feeds from bottom up)
 
-![alt text] (/images/figure4.jpg "Figure 4") \
+![Figure 4] (images/figure4.jpg "Figure 4") \
 Figure 4: Encoder and discriminator model structure (input feeds from bottom up)
 
 No dropouts were used since noise was artificially generated to reduce overfitting. Also, the plan was to train on a training set of size ~ 100000 shapes with another 100000 of empty inputs. A rough estimate of unique shapes to fit in a 16x16 grid of sufficient size gives < 100000, therefore overfitting is highly unlikely when the training set is larger than the actual number of possible shapes.
@@ -66,18 +66,18 @@ Many window sizes may be used to identify many masks for the foregrounds (since 
 
 The compression of the image some sample images show an approximately 50% reduction in size from the original image size. Although the alterations to the image is noticeable, the details on the important objects remain unchanged. Furthermore, the objects in the images are recognizable however, text sometimes is lost as it is treated as a “texture” on the background.
 
-![alt text] (/images/figure5.jpg "Figure 5") \
+![Figure 5] (images/figure5.jpg "Figure 5") \
 Figure 5: Original Sample
 
-![alt text] (/images/figure6.jpg "Figure 6") \
+![Figure 6] (images/figure6.jpg "Figure 6") \
 Figure 6: Background Compression result of a sample image. Some roof tiles as well as parts of the street are visibly blurred
 
-![alt text] (/images/figure7.jpg "Figure 7") \
+![Figure 7] (images/figure7.jpg "Figure 7") \
 Figure 7: JPEG compressed image to a similar size as the Background Compressed image
 
 A zoomed in view shows that the Background Compression method preserves the file details while the JPEG compression losses some finesse.
 
-![alt text] (/images/figure8.jpg "Figure 8") \
+![Figure 8] (images/figure8.jpg "Figure 8") \
 Figure 8: Zoomed into the 3 images. Left: Original, Middle: Background Compression, Right: JPEG compression
 
 ## Conclusion
