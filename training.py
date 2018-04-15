@@ -3,6 +3,10 @@ Final Project - Winter 2018
 Written by: Mike (JingHongYu) Bian
 
 Train VAE encoder, decoder and disciminator
+
+Change DATAPATH to source of your dataset
+
+(You must run generate_data to create your dataset prior to training)
 '''
 import time
 
@@ -11,7 +15,7 @@ from keras.callbacks import TensorBoard
 from models import create_VAE, create_VAE_discriminator, unbundle_discriminator
 from data_loading import get_data
 
-DATAPATH = 'default10000.p'
+DATAPATH = 'default100000.p'
 ID = str(int(time.time()))
 
 data = get_data(DATAPATH)

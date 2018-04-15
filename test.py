@@ -2,7 +2,9 @@
 Final Project - Winter 2018
 Written by: Mike (JingHongYu) Bian
 
-Test foreground extraction algorithm
+Test background compression algorithm
+
+Change IMG_PATH to the path of the image to run the algorithm on.
 '''
 from keras.models import load_model
 from PIL import ImageFilter, Image
