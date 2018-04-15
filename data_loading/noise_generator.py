@@ -41,8 +41,8 @@ class NoiseGenerator:
     def __init__(self, dim=16,
                  grad1_alpha=0.5, grad2_alpha=0.5,
                  blur_radius=0,
-                 noise_alpha=0,
-                 foreground_objects=10, object_size=12,
+                 noise_alpha=0.1,
+                 foreground_objects=12, object_size=16,
                  random_background=0.1,
                  invert=True):
         '''

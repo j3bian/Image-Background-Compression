@@ -123,6 +123,7 @@ class ForegroundSearch:
         self._display_figures(img, mask, size)
         thresholded_mask = np.zeros(mask.shape)
         thresholded_mask[np.where(mask > self.mask_threshold)] = 1
+        thresholded_mask[np.where(mask <= self.mask_threshold)] = 0
         return thresholded_mask
         
     def _display_figures(self, img:Image.Image, mask, size:int):
@@ -208,6 +209,6 @@ class ForegroundSearch:
 
         foreground = np.array(img.convert(mode='RGB')).copy()
         foreground[np.where(mask == 0)] = [0, 0, 255]
-        return foreground
+        return foreground, mask
 
             
