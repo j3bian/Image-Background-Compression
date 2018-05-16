@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 from keras import Model
 from matplotlib import pyplot as plt
+from sys import getsizeof
 import random
 
 def open_image(path:str):
@@ -59,7 +60,7 @@ class ForegroundSearch:
         if displays is None:
             self.displays = []
         elif displays == 'all':
-            self.displays = ['original', 'masked', 'foreground', 'mask', 'SNR', 'mask_histogram']
+            self.displays = ['original', 'masked', 'foreground', 'mask', 'SNR', 'mask_histogram', 'recreate']
         else:
             self.displays = displays
         self.SNRs = []
@@ -105,6 +106,7 @@ class ForegroundSearch:
         print('Running with window size ' + str(size))
         img = img.copy()
         img.load()
+        encoding = []
         tiles, tile_area = self._create_tiles(img, size)
         encoded = self.encoder.predict(tiles, verbose=1)
         snrs = self.discriminator.predict(encoded, verbose=1)
@@ -112,28 +114,29 @@ class ForegroundSearch:
         rows = int((img.size[0] - size + self.input_size + 1))
         cols = int((img.size[1] - size + self.input_size + 1))
         mask = np.zeros((rows, cols))
-        for (i, j), result, snr in zip(tile_area, decoded, snrs):
+        img_array = np.array(img.resize(reversed(mask.shape)))
+        for (i, j), shape, snr, code in zip(tile_area, decoded, snrs, encoded):
             snr = snr.squeeze()
             self.SNRs.append(snr)
             if snr > self.noise_threshold:
-                mask[i:i+self.input_size, j:j+self.input_size] += result.squeeze()
-                self.mask_values.extend(result.flatten())
+                mask[i:i+self.input_size, j:j+self.input_size] += shape.squeeze()
+                self.mask_values.extend(shape.flatten())
+                encoding.append(((i, j), code, np.median(img_array[i:i+self.input_size, j:j+self.input_size])))
         mask = mask/np.max(mask)
         mask = np.array(Image.fromarray(np.swapaxes(mask, 0, 1)).resize(img.size))
-        self._display_figures(img, mask, size)
+        self._display_figures(img, mask, size, ((rows, cols), encoding))
         thresholded_mask = np.zeros(mask.shape)
         thresholded_mask[np.where(mask > self.mask_threshold)] = 1
         thresholded_mask[np.where(mask <= self.mask_threshold)] = 0
-        return thresholded_mask
+        return thresholded_mask, (self.input_size, (rows, cols), encoding)
         
-    def _display_figures(self, img:Image.Image, mask, size:int):
+    def _display_figures(self, img:Image.Image, mask, size:int, encoding_bundle:tuple):
         '''
         Display figures if necessary
 
         Inputs:
             mask = 2D array of the foreground mask
         '''
-        show = len(self.displays) != 0
         if 'original' in self.displays:
             plt.figure()
             plt.imshow(np.asarray(img), cmap='gray')
@@ -174,6 +177,21 @@ class ForegroundSearch:
             plt.hist(self.mask_values)
             plt.title('Mask values at size {}'.format(size))
         
+        if 'recreate' in self.displays:
+            shape = encoding_bundle[0]
+            encoding = encoding_bundle[1]
+            recreated = np.zeros(shape) + 255
+
+            positions, codes, fills = zip(*encoding)
+            shapes = self.decoder.predict(np.array(codes))
+            for (i, j), shape, fill in zip(positions, shapes, fills):
+                recreated[i:i+self.input_size, j:j+self.input_size] += shape.squeeze() * fill
+                #### TODO:: recreated is >> 255
+            plt.figure()
+            plt.imshow(np.swapaxes(recreated, 0, 1), cmap='gray')
+            plt.title('Recreated at window size {}, {:.2f}kb'.format(size, getsizeof(encoding)/1000))
+
+        
         # if show:
         #     plt.show()
         return
@@ -196,7 +214,7 @@ class ForegroundSearch:
         else:
             sizes = [int(min_size * i) for i in sizes]
         
-        masks = [self._run(img, size) for size in sizes]
+        masks = [self._run(img, size)[0] for size in sizes]
 
         # combine mask
         mask = masks[0]
