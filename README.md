@@ -8,14 +8,14 @@ This project was written as part of a final project
 
 ### Running Algorithm
 
-Run test.py to try image background compression on a sample.jpg
+Run [test.py](test.py) to try image background compression on a sample.jpg
 
 To run the algorithm on other images, open file and change IMG_PATH to the path to your image.
 
 ### Training models
 
 To train your own models, use [generate_data.py](generate_data.py) to generate a dataset.
-After dataset is created, run training.py on that dataset by changing DATAPATH to the path to your dataset.
+After dataset is created, run [training.py](training.py) on that dataset by changing DATAPATH to the path to your dataset.
 
 
 ## Motivation and Background
