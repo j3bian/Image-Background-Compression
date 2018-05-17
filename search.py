@@ -9,6 +9,8 @@ from PIL import Image, ImageFilter
 from keras import Model
 from matplotlib import pyplot as plt
 from sys import getsizeof
+import pickle
+import bz2
 import random
 
 def open_image(path:str):
@@ -66,7 +68,7 @@ class ForegroundSearch:
         self.SNRs = []
         self.mask_values = []
     
-    def _create_tiles(self, img:Image.Image, size:int):
+    def _create_tiles(self, img:Image.Image, window_size:int):
         '''
         Create (overlapping) tiles for input into the encoder. Each tile will be the of
         (size * size) but reshaped to be (input_size * input_size)
@@ -82,9 +84,10 @@ class ForegroundSearch:
         tiles = []
         tile_area = []
         desired_size = (
-            img.size[0] - size + 1 + self.input_size,
-            img.size[1] - size + 1 + self.input_size
+            int(img.size[0] / window_size * self.input_size),
+            int(img.size[1] / window_size * self.input_size)
             )
+        # print("desired size {}".format(desired_size))
         img = img.copy().resize(desired_size)
         for i in range(0, img.size[0] - self.input_size + 1, self.step):
             for j in range(0, img.size[1] - self.input_size + 1, self.step):
@@ -103,34 +106,38 @@ class ForegroundSearch:
         Returns:
             mask = 2D array where pixel is 1 for foreground and 0 for background
         '''
-        print('Running with window size ' + str(size))
+        window_size = min(img.size) * size
+        print('Running with window size ' + str(window_size))
         img = img.copy()
         img.load()
         encoding = []
-        tiles, tile_area = self._create_tiles(img, size)
+        tiles, tile_area = self._create_tiles(img, window_size)
         encoded = self.encoder.predict(tiles, verbose=1)
         snrs = self.discriminator.predict(encoded, verbose=1)
         decoded = self.decoder.predict(encoded)
-        rows = int((img.size[0] - size + self.input_size + 1))
-        cols = int((img.size[1] - size + self.input_size + 1))
+        rows = int((img.size[0] / window_size * self.input_size))
+        cols = int((img.size[1] / window_size * self.input_size))
         mask = np.zeros((rows, cols))
         img_array = np.array(img.resize(reversed(mask.shape)))
-        for (i, j), shape, snr, code in zip(tile_area, decoded, snrs, encoded):
+        for t, (i, j), shape, snr, code in zip(tiles, tile_area, decoded, snrs, encoded):
             snr = snr.squeeze()
             self.SNRs.append(snr)
             if snr > self.noise_threshold:
                 mask[i:i+self.input_size, j:j+self.input_size] += shape.squeeze()
                 self.mask_values.extend(shape.flatten())
                 encoding.append(((i, j), code, np.median(img_array[i:i+self.input_size, j:j+self.input_size])))
+                # plt.figure()
+                # plt.imshow(t.squeeze(), cmap='gray')
+                # plt.show()
         mask = mask/np.max(mask)
         mask = np.array(Image.fromarray(np.swapaxes(mask, 0, 1)).resize(img.size))
-        self._display_figures(img, mask, size, ((rows, cols), encoding))
+        self._display_figures(img, mask, window_size, ((rows, cols), encoding))
         thresholded_mask = np.zeros(mask.shape)
         thresholded_mask[np.where(mask > self.mask_threshold)] = 1
         thresholded_mask[np.where(mask <= self.mask_threshold)] = 0
         return thresholded_mask, (self.input_size, (rows, cols), encoding)
         
-    def _display_figures(self, img:Image.Image, mask, size:int, encoding_bundle:tuple):
+    def _display_figures(self, img:Image.Image, mask, window_size:int, encoding_bundle:tuple):
         '''
         Display figures if necessary
 
@@ -149,7 +156,7 @@ class ForegroundSearch:
             
             plt.figure()
             plt.imshow(masked.astype('uint8'))
-            plt.title('Masked image at size {}. Red = foreground'.format(size))
+            plt.title('Masked image at size {}. Red = foreground'.format(window_size))
         
         if 'foreground' in self.displays:
             masked = np.array(img.convert(mode='RGB')).copy()
@@ -157,7 +164,7 @@ class ForegroundSearch:
 
             plt.figure()
             plt.imshow(masked.astype('uint8'))
-            plt.title('Foreground of image at size {}. Blue = Background'.format(size))
+            plt.title('Foreground of image at size {}. Blue = Background'.format(window_size))
 
         if 'mask' in self.displays:
             width = mask.shape[1]
@@ -165,31 +172,30 @@ class ForegroundSearch:
 
             plt.figure()
             plt.imshow(np.vstack((border, mask)), cmap='gray')
-            plt.title('Mask at size {}'.format(size))
+            plt.title('Mask at size {}'.format(window_size))
         
         if 'SNR' in self.displays:
             plt.figure()
             plt.hist(self.SNRs)
-            plt.title('SNR Levels at size {}'.format(size))
+            plt.title('SNR Levels at size {}'.format(window_size))
         
         if 'mask_histogram' in self.displays:
             plt.figure()
             plt.hist(self.mask_values)
-            plt.title('Mask values at size {}'.format(size))
+            plt.title('Mask values at size {}'.format(window_size))
         
         if 'recreate' in self.displays:
             shape = encoding_bundle[0]
             encoding = encoding_bundle[1]
-            recreated = np.zeros(shape) + 255
+            recreated = np.zeros(shape) - 1
 
             positions, codes, fills = zip(*encoding)
             shapes = self.decoder.predict(np.array(codes))
             for (i, j), shape, fill in zip(positions, shapes, fills):
                 recreated[i:i+self.input_size, j:j+self.input_size] += shape.squeeze() * fill
-                #### TODO:: recreated is >> 255
             plt.figure()
             plt.imshow(np.swapaxes(recreated, 0, 1), cmap='gray')
-            plt.title('Recreated at window size {}, {:.2f}kb'.format(size, getsizeof(encoding)/1000))
+            plt.title('Recreated at window size {}, {:.2f}kb'.format(window_size, getsizeof(bz2.compress(pickle.dumps(encoding, 4)))/1000))
 
         
         # if show:
@@ -208,11 +214,8 @@ class ForegroundSearch:
         Return:
             Image of the only foreground
         '''
-        min_size = min(img.size)
         if sizes is None:
-            sizes = [int(min_size * i) for i in [1/2, 1/4, 1/8]]
-        else:
-            sizes = [int(min_size * i) for i in sizes]
+            sizes = [1/2, 1/4, 1/8, 1/16, 1/32]
         
         masks = [self._run(img, size)[0] for size in sizes]
 
