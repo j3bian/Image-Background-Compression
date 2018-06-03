@@ -75,7 +75,7 @@ class ShapeLoader:
         data = np.random.permutation(data)
         return zip(*data)
 
-    def generate_data(self, shape, i:int):
+    def generate_data(self, shape, i:int=1):
         '''
         Generates a tuple for a given shape (image)
 
